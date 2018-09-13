@@ -8,7 +8,7 @@
     </div>
     <div id="input-box">
       <span id="site">You@
-        <a href="https://hqweay.cn" target="_blank" style="color: black;">Hqweay</a>:/$</span>
+        <a :href="blog.site" target="_blank" style="color: black;">{{blog.name}}</a>:/$</span>
       <input type="text" id="input" v-model="command" @keyup.enter="matchCommand" @keydown.tab="completeCommond">
     </div>
   </div>
@@ -34,6 +34,7 @@ export default {
   data() {
     return {
       blog: {
+        name: "Hqweay",
         site: "https://hqweay.cn", //网址
         archiveUrl: "https://hqweay.cn/archives/", //归档页面，暂不支持分页以及其他
         label: "h3" //标题使用标签
@@ -229,7 +230,10 @@ export default {
 
         //这里出了错 index 会出现 length， item 等值
         //所以解析 xml 失败，手机上不能忽略这个错 直接加载失败
-        for (let index in h3s) {
+        // for (let index in h3s) {
+        //逆序输出
+        let index = h3s.length - 1;
+        for (; index >= 0; index--) {
           if (!isNaN(index)) {
             let titleUrl = h3s[index].innerHTML;
             let doc = parser.parseFromString(titleUrl, "text/xml");
