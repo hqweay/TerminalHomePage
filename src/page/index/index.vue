@@ -7,7 +7,8 @@
       <p v-else v-html="command.message"></p>
     </div>
     <div id="input-box">
-      <span id="site">guest@hqweay:/$</span>
+      <span id="site">You@
+        <a href="https://hqweay.cn" target="_blank" style="color: black;">Hqweay</a>:/$</span>
       <input type="text" id="input" v-model="command" @keyup.enter="matchCommand" @keydown.tab="completeCommond">
     </div>
   </div>
@@ -37,7 +38,25 @@ export default {
         archiveUrl: "https://hqweay.cn/archives/", //归档页面，暂不支持分页以及其他
         label: "h3" //标题使用标签
       },
-      supportedCommands: ["help", "ls", "clear", "show about", "show archives"],
+      //支持的命令
+      supportedCommands: [
+        {
+          command: "help",
+          Attribute: []
+        },
+        {
+          command: "ls",
+          Attribute: []
+        },
+        {
+          command: "clear",
+          Attribute: []
+        },
+        {
+          command: "show",
+          Attribute: ["show about", "show archives"]
+        }
+      ],
       documents: ["about", "archives", "goodThings"],
       commands: [],
       command: ""
@@ -54,36 +73,26 @@ export default {
     matchCommand() {
       let command = this.command;
       this.inputCommand();
-      if (!this.supportedCommands.includes(command)) {
-        var patt = /rm/;
-        if (patt.test(command)) {
-          console.log("哈哈哈");
+
+      switch (command) {
+        case /rm[ a-zA-Z]*/.test(command) ? command : false:
           this.Egg();
-        } else {
-          console.log("不存在此命令");
-          this.addCommandWithoutTime(
-            "command",
-            "This command is not yet supported. Try to see 'help'."
-          );
-        }
-      } else {
-        switch (command) {
-          case "clear":
-            this.Clear();
-            break;
-          case "help":
-            this.Help();
-            break;
-          case "ls":
-            this.Ls();
-            break;
-          case "show about":
-            this.showAbout();
-            break;
-          case "show archives":
-            this.showArchives();
-            break;
-        }
+          break;
+        case "clear":
+          this.Clear();
+          break;
+        case "help":
+          this.Help();
+          break;
+        case "ls":
+          this.Ls();
+          break;
+        case /show[ a-zA-Z]*/.test(command) ? command : false:
+          this.Show(command);
+          break;
+        default:
+          this.Error();
+          break;
       }
     },
     /**
@@ -120,6 +129,29 @@ export default {
       console.log("聚焦");
       document.getElementById("input").focus();
     },
+    Show(command) {
+      switch (command) {
+        case /[a-zA-Z ]*about/.test(command) ? command : false:
+          this.showAbout();
+          break;
+        case /[a-zA-Z ]*archives/.test(command) ? command : false:
+          this.showArchives();
+          break;
+        default:
+          this.addCommandWithoutTime(
+            "command",
+            "Don`t find this document, try show about ?"
+          );
+          break;
+      }
+    },
+    Error() {
+      console.log("不存在此命令");
+      this.addCommandWithoutTime(
+        "command",
+        "This command is not yet supported. Try to see 'help'."
+      );
+    },
     /**
      * 当用户输入 rm
      */
@@ -144,8 +176,15 @@ export default {
       for (let index in this.supportedCommands) {
         this.addCommandWithoutTime(
           "command",
-          "--" + this.supportedCommands[index]
+          "> " + this.supportedCommands[index].command
         );
+        for (let i in this.supportedCommands[index].Attribute) {
+          console.log(i);
+          this.addCommandWithoutTime(
+            "command",
+            ">> " + this.supportedCommands[index].Attribute[i]
+          );
+        }
       }
       this.addCommandWithoutTime("command", "Example > show about");
     },
@@ -178,32 +217,33 @@ export default {
      * 因为用的 hexo ，文章标题需要自己去解析
      **/
     showArchives() {
-      this.$ajax.get(this.blog.archiveUrl).then(response => {
-        // console.log(response.data);
+      this.$ajax({
+        method: "get",
+        url: this.blog.archiveUrl
+      }).then(response => {
         let parser = new DOMParser();
         let htmlDoc = parser.parseFromString(response.data, "text/html");
-        let h3s = htmlDoc.getElementsByTagName(this.blog.label);
 
-        // console.log(h3s);
-        // let titleUrl = h3s[0].innerHTML;
-        // let doc = parser.parseFromString(titleUrl, "text/xml");
-        // console.log(doc);
-        // let a = doc.firstChild;
-        // console.log(a.getAttribute("href"));
-        // a.setAttribute("href", "www.xxx.com");
-        // console.log(a);
-        this.addCommandWithoutTime("command", "waiting for loading ...");
+        let h3s = htmlDoc.getElementsByTagName(this.blog.label);
+        console.log(htmlDoc);
+
+        //这里出了错 index 会出现 length， item 等值
+        //所以解析 xml 失败，手机上不能忽略这个错 直接加载失败
         for (let index in h3s) {
-          let titleUrl = h3s[index].innerHTML;
-          let doc = parser.parseFromString(titleUrl, "text/xml");
-          let a = doc.firstChild;
-          //另外设置
-          a.setAttribute("href", this.blog.site + a.getAttribute("href"));
-          a.setAttribute("target", "_BLANK"); //新建窗口打开文章
-          a.setAttribute("style", " color: cadetblue;"); //颜色
-          //标签转文字 方便插入网页
-          titleUrl = a.outerHTML;
-          this.addCommandWithoutTime("url", titleUrl);
+          if (!isNaN(index)) {
+            let titleUrl = h3s[index].innerHTML;
+            let doc = parser.parseFromString(titleUrl, "text/xml");
+            let a = doc.firstChild;
+            //另外设置
+            a.setAttribute("href", this.blog.site + a.getAttribute("href"));
+            a.setAttribute("target", "_BLANK"); //新建窗口打开文章
+            a.setAttribute("style", " color: cadetblue;"); //颜色
+            //标签转文字 方便插入网页
+            titleUrl = a.outerHTML;
+            this.addCommandWithoutTime("url", titleUrl);
+          } else {
+            console.log(index);
+          }
         }
       });
     }
