@@ -1,8 +1,16 @@
-
-
 # 说明
 
+## 介绍
 
+一个用 vue 实现的简单仿终端页面，实现了简单的命令匹配与配置，还做了博客的解析，效果见图。
+
+## 效果
+
+![](https://raw.githubusercontent.com/hqweay/TerminalHomePage/master/screenshots/01.jpg)
+
+![](https://raw.githubusercontent.com/hqweay/TerminalHomePage/master/screenshots/02.jpg)
+
+![](https://raw.githubusercontent.com/hqweay/TerminalHomePage/master/screenshots/03.jpg)
 
 ## Build Setup
 
